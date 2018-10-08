@@ -47,7 +47,6 @@ func New() *Logger {
 		logChan:   make(chan loggingMessage, oneMillion),
 	}
 	globalLogger.startLogging()
-	globalLogger.Info("(logging) initialized")
 	go func() {
 		closing := make(chan os.Signal, 1)
 		signal.Notify(closing, os.Interrupt)
@@ -134,6 +133,7 @@ func (l *Logger) startLogging() {
 				}
 			}
 			globalMutex.Unlock()
+			time.Sleep(time.Second)
 		}
 	}()
 }
