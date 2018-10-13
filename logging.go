@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/fatih/color"
 )
 
 // ansi colors
@@ -52,7 +54,7 @@ func New() *Logger {
 		signal.Notify(closing, os.Interrupt)
 		<-closing
 		globalMutex.Lock()
-		fmt.Print("\033[0m\n\r")
+		fmt.Print("\033[0m\r\n")
 		os.Exit(1)
 	}()
 	return globalLogger
@@ -120,14 +122,30 @@ func (l *Logger) startLogging() {
 					}
 					switch aColor {
 					case RED:
-						fmt.Printf("\033[1;31m%s\033[0m\n\r", aMsg)
+						if runtime.GOOS == "windows" {
+							fmt.Fprintln(color.Output, color.RedString(aMsg))
+						} else {
+							fmt.Printf("\033[1;31m%s\033[0m\r\n", aMsg)
+						}
 					case CYAN:
-						fmt.Printf("\033[1;36m%s\033[0m\n\r", aMsg)
+						if runtime.GOOS == "windows" {
+							fmt.Fprintln(color.Output, color.CyanString(aMsg))
+						} else {
+							fmt.Printf("\033[1;36m%s\033[0m\r\n", aMsg)
+						}
 					case WHITE:
-						fmt.Printf("\033[1;37m%s\033[0m\n\r", aMsg)
+						if runtime.GOOS == "windows" {
+							fmt.Fprintln(color.Output, color.WhiteString(aMsg))
+						} else {
+							fmt.Printf("\033[1;37m%s\033[0m\r\n", aMsg)
+						}
 					case MAGENTA:
 						if l.debugMode {
-							fmt.Printf("\033[1;35m%s\033[0\n\r", aMsg)
+							if runtime.GOOS == "windows" {
+								fmt.Fprintln(color.Output, color.MagentaString(aMsg))
+							} else {
+								fmt.Printf("\033[1;35m%s\033[0\r\n", aMsg)
+							}
 						}
 					}
 				}
@@ -180,7 +198,11 @@ func (l *Logger) Debug(words ...string) {
 	msg := time.Now().UTC().Format(defaultTimeLayout)
 	msg += " /d " + concatenateMessages(words)
 	globalMutex.Lock()
-	fmt.Printf("\033[1;32m%s\033[0m\n\r", msg)
+	if runtime.GOOS == "windows" {
+		fmt.Fprintln(color.Output, color.GreenString(msg))
+	} else {
+		fmt.Printf("\033[1;32m%s\033[0m\r\n", msg)
+	}
 	globalMutex.Unlock()
 }
 
@@ -223,6 +245,6 @@ func (l *Logger) SuddenExit() {
 	}
 	t := time.Now().UTC().Format(defaultTimeLayout)
 	globalMutex.Lock()
-	fmt.Printf("\033[1;31m%s\033[0m /e (suddenExit) program has finished executing\n\r", t)
+	fmt.Printf("\033[1;31m%s\033[0m /e (suddenExit) program has finished executing\r\n", t)
 	os.Exit(1)
 }
